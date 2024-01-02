@@ -1,0 +1,14 @@
+<script src="https://unpkg.com/htmx.org@1.9.9" integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+<div>
+	<button
+		hx-get="/ClickCount"
+		hx-trigger="click"
+		hx-target="#noOfClicks"
+	>Click Me!
+	</button>
+	<div id=noOfClicks>0</div>
+</div>
+<div hx-ext="ws" ws-connect="/ws">
+	<div id="notifications" hx-swap-oob="true"></div>
+</div>
