@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"path/filepath"
 	"strconv"
 	"time"
+	"net/http" // could change this to Echo https://echo.labstack.com/
+	"github.com/gorilla/websocket" // could change this to Echo https://echo.labstack.com/
 
-	"github.com/gorilla/websocket"
 )
 
 type ChatMessage struct {
