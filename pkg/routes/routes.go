@@ -1,85 +1,106 @@
 package routes
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize: 1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {return true},
+type ChatMessage struct {
+    ChatMessage string `json:"chatMessage"`
+    Headers     struct {
+        HXRequest      string `json:"HX-Request"`
+        HXTrigger      string `json:"HX-Trigger"`
+        HXTriggerName  string `json:"HX-Trigger-Name"`
+        HXTarget       string `json:"HX-Target"`
+        HXCurrentURL   string `json:"HX-Current-URL"`
+    } `json:"HEADERS"`
 }
 
-//func homePage(w http.ResponseWriter, r *http.Request) {
-//	fmt.Fprint(w, "Home Page")
-//}
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
+}
 
 func reader(conn *websocket.Conn) {
+	log.Println("Starting reader")
 	defer conn.Close()
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(err)
+			log.Println("Error reading the websocket message:", err)
 			return
 		}
+		log.Println(messageType)
 		log.Println(string(p))
 
-		if err := conn.WriteMessage(messageType, p); err != nil {
-			log.Println((err))
+		// Unmarshal the JSON message into the ChatMessage struct
+		var chatMsg ChatMessage
+        if err := json.Unmarshal(p, &chatMsg); err != nil {
+            log.Println("Error unmarshaling JSON:", err)
+            continue
+        }
+
+        // Return the chat message back to the UI
+        log.Println("Received chat message:", chatMsg.ChatMessage)
+		message := "You just typed '" + chatMsg.ChatMessage + "'"
+		messageAppend := []byte(`<div id="idChatroomAppend" hx-swap-oob="beforeend"><p>` + message + `</p></div>`)
+		if err := conn.WriteMessage(websocket.TextMessage, messageAppend); err != nil {
+			log.Println("Error writing message back to client:", err)
 			return
 		}
-
-		/*
-		log.Println("is this working here")
-		message := []byte("This is a periodic message.")
-		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
-			log.Println(err)
-		return
-		}		
-		*/
 	}
 }
 
-func sendWSMessage(conn *websocket.Conn){
-	log.Println("is this working")
-	for i:= 0; i<10; i++ {
-		message := []byte("This is a periodic message.")
-		time.Sleep(5 * time.Second)
-		if err := conn.WriteMessage(websocket.TextMessage, message); err != nil {
-			log.Println(err)
+func sendWSMessage(conn *websocket.Conn) {
+	log.Println("Starting sendWSMessage")
+	for i := 0; i < 10; i++ {
+		message := "This is message update number " + strconv.Itoa(i+1) + "; "
+		messageSwap := []byte(`<div id="idMessageSwap" hx-swap-oob="true">` + message + `</div>`)
+		messageAppend := []byte(`<div id="idMessageAppend" hx-swap-oob="beforeend">` + message + `</div>`)
+		log.Println(i + 1)
+		if err := conn.WriteMessage(websocket.TextMessage, messageSwap); err != nil {
+			log.Println("Error writing swap message", err)
 			return
-		}		
+		}
+		if err := conn.WriteMessage(websocket.TextMessage, messageAppend); err != nil {
+			log.Println("Error writing append message", err)
+			return
+		}
+		time.Sleep(3 * time.Second)
 	}
 }
 
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {log.Println(err)}
-	log.Println("Client successfully connected...")
-	sendWSMessage(ws)
-	reader(ws)
+	if err != nil {
+		log.Println("Error upgrading the endpoint to a websocket", err)
+	}
+	log.Println("Starting wsEndpoint")
+	go sendWSMessage(ws)
+	go reader(ws)
 }
 
 func setupRoutes() {
+	absPath, err := filepath.Abs(".")
+	if err != nil {panic(err)}
 	http.HandleFunc("/ws", wsEndpoint)
-	http.HandleFunc("/pets", func(w http.ResponseWriter, r *http.Request){
-		http.ServeFile(w, r, "C:\\Users\\simon\\GitHub\\Four\\pkg\\website\\pets.html")
-	})
-	http.HandleFunc("/home", func(w http.ResponseWriter, r *http.Request){
-		http.ServeFile(w, r, "C:\\Users\\simon\\GitHub\\Four\\pkg\\website\\home.html")
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, absPath + "\\pkg\\website\\home.html")
+		x := http.Dir("website")
+		log.Println(x)
 	})
 	clickCounter := 0
-	http.HandleFunc("/ClickCount", func(w http.ResponseWriter, r *http.Request){
+	http.HandleFunc("/ClickCount", func(w http.ResponseWriter, r *http.Request) {
 		clickCounter++
 		fmt.Fprint(w, clickCounter)
-	})
-	http.HandleFunc("/", func (w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Home Page")
 	})
 }
 

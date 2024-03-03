@@ -1,18 +1,49 @@
-<script src="https://unpkg.com/htmx.org@1.9.9" integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX" crossorigin="anonymous"></script>
+<!DOCTYPE html>
+<html>
+<script src="https://unpkg.com/htmx.org@1.9.9"
+	integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjAxHETgRn9l4fvX31ZxDxvwQnyMOX"
+	crossorigin="anonymous"></script>
 <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+<h1>My terrible HTMX Golang websocket examples</h1>
+<div hx-ext="ws" ws-connect="/ws">
+	<h2>Swap</h2>
+	<div id="idMessageSwap" hx-swap-oob="true">This is the initial message;</div>
+	<h2>Append</h2>
+	<div id="idMessageAppend" hx-swap-oob="beforeend">This is the initial message; </div>
+	<h2>Chat</h2>
+	<p>Type a message and press enter to send</p>
+	<form id="form" ws-send hx-on:htmx:after-request="alert('You clicked me!')">
+		<input name="chatMessage" />
+	</form>
+	<div id="idChatroomAppend" hx-swap-oob="beforeend">
+		<p>This is the initial message</p>
+	</div>
+</div>
+<h1>My terrible HTMX Golang other examples</h1>
+<h2>Target an ID</h2>
 <div>
-	<button
-		hx-get="/ClickCount"
-		hx-trigger="click"
-		hx-target="#noOfClicks"
-	>Click Me!
+	<button hx-get="/ClickCount" hx-trigger="click" hx-target="#noOfClicks">Click Me!
 	</button>
 	<div id=noOfClicks>0</div>
 </div>
-<div hx-ext="ws" ws-connect="/ws">
-	<div id="notifications" hx-swap-oob="true"></div>
-    <div id="chat_room" hx-swap-oob="morphdom"></div>
-    <form id="form" ws-send>
-        <input name="chat_message">
-    </form>
+<h2>Pets</h2>
+<div>
+	<p><strong>Pets:</strong> {{ . | len }}</p>
+	{{ range . }}
+	<hr />
+	<p>Simon test</p>
+	<dl>
+		<dt>Name</dt>
+		<dd>{{ .Name }}</dd>
+		<dt>Sex</dt>
+		<dd>{{ .Sex }} ({{ if .Intact }}intact{{ else }}{{ if (eq .Sex "Female") }}spayed{{ else }}neutered{{ end }}{{
+			end }})</dd>
+		<dt>Age</dt>
+		<dd>{{ .Age }}</dd>
+		<dt>Breed</dt>
+		<dd>{{ replace .Breed "/" " & " }}</dd>
+	</dl>
+	{{ end }}
 </div>
+
+</html>
