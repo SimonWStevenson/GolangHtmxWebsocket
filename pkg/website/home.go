@@ -8,39 +8,9 @@ import (
 	"strings"
 )
 
-type Pet struct {
-	Name   string
-	Sex    string
-	Intact bool
-	Age    string
-	Breed  string
-}
-
 func Main() {
 	// https://www.digitalocean.com/community/tutorials/how-to-use-templates-in-go
-	dogs := []Pet{
-		{
-			Name:   "Jujube",
-			Sex:    "Female",
-			Intact: false,
-			Age:    "10 months",
-			Breed:  "German Shepherd/Pitbull",
-		},
-		{
-			Name:   "Zephyr",
-			Sex:    "Male",
-			Intact: true,
-			Age:    "13 years, 3 months",
-			Breed:  "German Shepherd/Border Collie",
-		},
-		{
-			Name:   "Bruce Wayne",
-			Sex:    "Male",
-			Intact: false,
-			Age:    "3 years, 8 months",
-			Breed:  "Chihuahua",
-		},
-	}
+	dogs := Pets()
 
 	// generate the template
 	funcMap := template.FuncMap{
